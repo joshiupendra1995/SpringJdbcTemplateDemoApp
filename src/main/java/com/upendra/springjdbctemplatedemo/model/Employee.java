@@ -1,11 +1,14 @@
 package com.upendra.springjdbctemplatedemo.model;
 
 import java.io.Serializable;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 /**
@@ -28,6 +31,9 @@ public class Employee implements Serializable {
 
 	@Column(name = "role")
 	private String role;
+
+	@Column(name = "Project")
+	private Project project;
 
 	public Employee() {
 
@@ -62,6 +68,16 @@ public class Employee implements Serializable {
 
 	public void setRole(String role) {
 		this.role = role;
+	}
+
+	@ManyToOne
+	@JoinColumn(name = "Project")
+	public Project getProject() {
+		return project;
+	}
+
+	public void setProject(Project project) {
+		this.project = project;
 	}
 
 	@Override
