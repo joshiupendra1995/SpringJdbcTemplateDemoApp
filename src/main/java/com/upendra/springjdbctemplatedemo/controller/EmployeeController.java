@@ -2,9 +2,25 @@ package com.upendra.springjdbctemplatedemo.controller;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URL;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.X509Certificate;
 import java.util.List;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+
+import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -44,29 +60,114 @@ public class EmployeeController {
 		return new ResponseEntity<Employee>(namelist, HttpStatus.OK);
 
 	}
-	
+
+	@GetMapping("/copyFile")
+	public String copyFile() throws IOException {
+		File source = new File("\\UPENDRA-PC\\shared");
+		File dest = new File("D:\\dest");
+		try {
+			FileUtils.copyDirectory(source, dest);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		StringBuilder readFile = new StringBuilder();
+		int character = 0;
+
+		FileInputStream fin = new FileInputStream("D:\\dest\\temp.txt");
+		while ((character = fin.read()) != -1) {
+			readFile.append((char) character);
+
+		}
+
+		fin.close();
+
+		return "File Contents:: " + readFile + "  File Path:: " + dest.getAbsolutePath();
+	}
+
+	private static void downloadUsingNIO(String urlStr, String file) throws IOException {
+		URL url = new URL(urlStr);
+		ReadableByteChannel rbc = Channels.newChannel(url.openStream());
+		FileOutputStream fos = new FileOutputStream(file);
+		fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
+		fos.close();
+		rbc.close();
+	}
+
+	@GetMapping("/downloadFile")
+	public String downloadFile() throws IOException, KeyManagementException, NoSuchAlgorithmException {
+		// Create a trust manager that does not validate certificate chains
+		TrustManager[] trustAllCerts = new TrustManager[] { new X509TrustManager() {
+			public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+				return null;
+			}
+
+			public void checkClientTrusted(X509Certificate[] certs, String authType) {
+			}
+
+			public void checkServerTrusted(X509Certificate[] certs, String authType) {
+			}
+		} };
+
+		// Install the all-trusting trust manager
+		SSLContext sc = SSLContext.getInstance("SSL");
+		sc.init(null, trustAllCerts, new java.security.SecureRandom());
+		HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+
+		// Create all-trusting host name verifier
+		HostnameVerifier allHostsValid = new HostnameVerifier() {
+
+			@Override
+			public boolean verify(String hostname, SSLSession session) {
+				return true;
+			}
+
+		};
+		// Install the all-trusting host verifier
+		HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
+		
+		//below static method accepts url to download the file from and path the destination it be downloaded too
+		downloadUsingNIO("https://www.tutorialspoint.com/java/java_tutorial.pdf", "C:\\dest\\java.pdf");
+
+		File f = new File("C:\\dest\\java.pdf"); //mention the path and the file name your downloaded file will be renamed too
+		FileInputStream fin = new FileInputStream(f);
+		StringBuilder readFile = new StringBuilder();
+		int content;
+		while ((content = fin.read()) != -1) {
+			// convert to char and display it
+			readFile.append((char) content);
+		}
+		fin.close();
+
+		return f.getName() + "download successfully" + " ||  File Contents::   " + readFile;
+
+	}
+
 	@GetMapping("/getfiledata")
-	public String getfiledata() throws IOException{
-		File f=new File("temp.txt");
-		String str="Output=Good Bye KPN";
-        f.createNewFile();
-        FileOutputStream fout=new FileOutputStream(f);
-        fout.write(str.getBytes());
-        int character = 0;
-        String output="";
-        FileInputStream fin=new FileInputStream(f);
-        while((character=fin.read())!=-1){
-        	
-        	//System.out.print((char)character);
-        	output=output+(char)character;
-        	
-        }
-        
-        //System.out.println(output);
-        //System.out.println(new String(barray.toByteArray()));
-        fout.close();
-        fin.close();
-        return output;
+	public String getfiledata() throws IOException {
+		File f = new File("C:/Users/Upendra/Desktop/temp.txt");
+		String str = "Output=Good Bye KPN";
+		if (!f.exists()) {
+			f.createNewFile();
+		}
+
+		FileOutputStream fout = new FileOutputStream(f);
+		fout.write(str.getBytes());
+		int character = 0;
+		String output = "";
+		FileInputStream fin = new FileInputStream(f);
+		while ((character = fin.read()) != -1) {
+
+			// System.out.print((char)character);
+			output = output + (char) character;
+
+		}
+
+		// System.out.println(output);
+		// System.out.println(new String(barray.toByteArray()));
+		fout.close();
+		fin.close();
+		return output + "" + f.getAbsolutePath();
 	}
 
 	/**
